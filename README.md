@@ -1,2 +1,3 @@
 "# projeto_final_php" 
-"Lucas, Boiola"
+"Lucas, Homão
+Edu, gayzão"
