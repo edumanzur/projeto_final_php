@@ -9,6 +9,7 @@
 <body>
     <header>
         <h1><strong><em>CriptoZap Chat</em></strong></h1>
+        <img src="./assents/criptozap_logo.png" alt="">
     </header>
     <section id="body">
         <div id="caixa">
