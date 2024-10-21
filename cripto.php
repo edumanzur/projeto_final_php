@@ -13,21 +13,26 @@
     </header>
     <section id="body">
         <div id="caixa">
-            <h3>Enviar Mensagem</h3>
+            <h3>Criptografar Mensagem</h3>
             <form action="" method="post">
-                <input type="text" name="mensagem" placeholder="Digite sua mensagem" required>
-                <button type="submit">Enviar</button>
+                <input type="text" name="mensagem" placeholder="Digite sua mensagem para criptografar" required>
+                <button type="submit" name="action" value="encrypt">Criptografar</button>
+            </form>
+
+            <h3>Descriptografar Mensagem</h3>
+            <form action="" method="post">
+                <input type="text" name="mensagem_criptografada" placeholder="Digite a mensagem criptografada para descriptografar" required>
+                <button type="submit" name="action" value="decrypt">Descriptografar</button>
             </form>
         </div>
 
         <div id="mensagens">
             <h3>Mensagens</h3>
             <?php
-
             $host = 'localhost'; 
             $dbname = 'banco_php'; 
-            $username = getenv('DB_USERNAME'); 
-            $password_db = getenv('DB_PASSWORD'); 
+            $username = 'root'; 
+            $password_db = '04100411LuBo!'; 
 
             try {
                 $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password_db);
@@ -52,29 +57,52 @@
 
             $key = 'sua-chave-secreta-aqui';
 
-            if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mensagem'])) {
-                $mensagem = $_POST['mensagem'];
-                $mensagemCriptografada = encrypt($mensagem, $key);
+            session_start();
+            $userId = $_SESSION['user_id'] ?? null; 
 
-                try {
-                    $sql = "INSERT INTO mensagensCriptografadas (mensagem_criptografada, data) VALUES (:mensagem_criptografada, NOW())";
-                    $stmt = $pdo->prepare($sql);
-                    $stmt->bindParam(':mensagem_criptografada', $mensagemCriptografada);
-                    $stmt->execute();
-                } catch (PDOException $e) {
-                    die("Erro ao inserir mensagem: " . $e->getMessage());
+            if ($userId === null) {
+                die("Você precisa estar logado para acessar esta página.");
+            }
+
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                if ($_POST['action'] === 'encrypt' && !empty($_POST['mensagem'])) {
+                    $mensagem = $_POST['mensagem'];
+                    $mensagemCriptografada = encrypt($mensagem, $key);
+
+                    try {
+                        $sql = "INSERT INTO mensagensCriptografadas (mensagem_criptografada, user_id, data) VALUES (:mensagem_criptografada, :user_id, NOW())";
+                        $stmt = $pdo->prepare($sql);
+                        $stmt->bindParam(':mensagem_criptografada', $mensagemCriptografada);
+                        $stmt->bindParam(':user_id', $userId);
+                        $stmt->execute();
+                        echo "<p>Mensagem criptografada: " . htmlspecialchars($mensagemCriptografada) . "</p>";
+                    } catch (PDOException $e) {
+                        die("Erro ao inserir mensagem: " . $e->getMessage());
+                    }
+                }
+
+                if ($_POST['action'] === 'decrypt' && !empty($_POST['mensagem_criptografada'])) {
+                    $mensagemCriptografada = $_POST['mensagem_criptografada'];
+                    $mensagemDescriptografada = decrypt($mensagemCriptografada, $key);
+
+                    if ($mensagemDescriptografada !== false) {
+                        echo "<p>Mensagem descriptografada: " . htmlspecialchars($mensagemDescriptografada) . "</p>";
+                    } else {
+                        echo "<p>Falha ao descriptografar a mensagem. Verifique se está correta.</p>";
+                    }
                 }
             }
 
             try {
-                $sql = "SELECT mensagem_criptografada FROM mensagensCriptografadas ORDER BY data DESC";
-                $stmt = $pdo->query($sql);
+                $sql = "SELECT mensagem_criptografada FROM mensagensCriptografadas WHERE user_id = :user_id ORDER BY data DESC";
+                $stmt = $pdo->prepare($sql);
+                $stmt->bindParam(':user_id', $userId);
+                $stmt->execute();
                 $mensagens = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 foreach ($mensagens as $msg) {
                     $mensagemCriptografadaFromDb = $msg['mensagem_criptografada'];
-                    $mensagemDescriptografada = decrypt($mensagemCriptografadaFromDb, $key);
-                    echo "<div class='mensagem'><strong>Criptografada:</strong> " . htmlspecialchars($mensagemCriptografadaFromDb) . "<br><strong>Descriptografada:</strong> " . htmlspecialchars($mensagemDescriptografada) . "</div>";
+                    echo "<div class='mensagem'><strong>Criptografada:</strong> " . htmlspecialchars($mensagemCriptografadaFromDb) . "</div>";
                 }
             } catch (PDOException $e) {
                 die("Erro ao buscar mensagens: " . $e->getMessage());
