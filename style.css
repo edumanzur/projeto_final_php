@@ -38,7 +38,7 @@ button {
 }
 
 button:hover {
-    color: gray;
+    background-color: rgb(0, 0, 94);
 }
 
 #mensagens {
