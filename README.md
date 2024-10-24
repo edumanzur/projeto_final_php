@@ -1,8 +1,4 @@
 
-Aqui está o texto formatado para o README.md:
-
-md
-Copiar código
 # CriptoZap
 
 **CriptoZap** é um sistema de chat simples que permite aos usuários criptografar e descriptografar suas mensagens de forma segura. O sistema utiliza **PHP** para o back-end e **MySQL** para armazenar os dados de usuários e mensagens. O CriptoZap oferece autenticação de usuários, criptografia de mensagens e uma interface intuitiva para uso.
